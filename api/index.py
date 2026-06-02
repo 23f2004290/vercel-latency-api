@@ -8,6 +8,17 @@ import statistics
 
 app = FastAPI()
 
+from fastapi.middleware.cors import CORSMiddleware
+
+# Add this after app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods including POST
+    allow_headers=["*"],  # Allows all headers
+)
+
 # Enable CORS for POST requests from any origin
 @app.post("/api/analytics")
 async def analytics_endpoint(request_data: Dict[str, Any]):
