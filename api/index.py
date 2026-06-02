@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 import json
 import numpy as np
 
@@ -9,48 +8,41 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-with open("q-vercel-latency.json", "r") as f:
+with open("q-vercel-latency.json") as f:
     DATA = json.load(f)
 
 
-@app.options("/{path:path}")
-async def options_handler(path: str):
-    return JSONResponse(content={})
-
-
 @app.post("/")
-async def calculate(body: dict):
+async def metrics(body: dict):
 
-    regions = body["regions"]
     threshold = body["threshold_ms"]
 
-    output = []
+    result = []
 
-    for region in regions:
+    for region in body["regions"]:
 
         rows = [
-            x for x in DATA
-            if x["region"] == region
+            r for r in DATA
+            if r["region"] == region
         ]
 
-        latency = [x["latency_ms"] for x in rows]
-        uptime = [x["uptime_pct"] for x in rows]
+        lat = [r["latency_ms"] for r in rows]
+        up = [r["uptime_pct"] for r in rows]
 
-        output.append({
+        result.append({
             "region": region,
-            "avg_latency": round(sum(latency)/len(latency), 2),
-            "p95_latency": round(float(np.percentile(latency, 95)), 2),
-            "avg_uptime": round(sum(uptime)/len(uptime), 2),
+            "avg_latency": round(sum(lat)/len(lat),2),
+            "p95_latency": round(float(np.percentile(lat,95)),2),
+            "avg_uptime": round(sum(up)/len(up),2),
             "breaches": sum(
                 1
-                for x in rows
-                if x["latency_ms"] > threshold
+                for r in rows
+                if r["latency_ms"] > threshold
             )
         })
 
-    return output
+    return result
